@@ -17,6 +17,8 @@ GitHub mirror branches in this repository:
 
 AOSP is a collection of Git repositories rather than one repository. This repository is the controlling root for the tree; the manifest remains the authoritative inventory of upstream component repositories.
 
+See [AOSP-INTAKE.md](AOSP-INTAKE.md) for the complete acquisition scope, subsystem checklist, single-human product boundaries, device-specific inputs, and acceptance gates. Source preservation and the software installed on the phone are separate decisions; current upstream tracking is not a claim of MIRO hardware compatibility.
+
 See [SOURCES.md](SOURCES.md) for the high-value Android layers and [MIRROR.md](MIRROR.md) for the breadth-first mirror policy. [MIRRORS.tsv](MIRRORS.tsv) is the seed inventory of source families whose branch and tag histories should be preserved here.
 
 ## Get the complete upstream tree
