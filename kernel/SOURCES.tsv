@@ -1,0 +1,17 @@
+# function	source	ref	path	status
+kernel-base	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	.	working donor; close to physical MIRO 5.15.149 kernel, not claimed identical
+uart	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	drivers/tty/serial/sprd_serial.c	upstream donor
+i2c	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	drivers/i2c/busses/i2c-sprd.c	upstream donor
+spi	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	drivers/spi/spi-sprd.c	upstream donor
+dma	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	drivers/dma/sprd-dma.c	upstream donor
+gpio	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	drivers/gpio/gpio-sprd.c	upstream donor
+gpio-eic	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	drivers/gpio/gpio-eic-sprd.c	upstream donor
+clocks	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	drivers/clk/sprd/sc9863a-clk.c	SC9863A-specific upstream donor
+emmc-sd-sdio	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	drivers/mmc/host/sdhci-sprd.c	upstream donor
+soc-device-tree	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	arch/arm64/boot/dts/sprd/sc9863a.dtsi	SC9863A-specific upstream donor
+platform-device-tree	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	arch/arm64/boot/dts/sprd/sharkl3.dtsi	SharkL3 upstream donor
+reference-board-device-tree	https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git	v5.15.149	arch/arm64/boot/dts/sprd/sp9863a-1h10.dts	1H10 reference only; not a MIRO board claim
+android-common-comparison	https://android.googlesource.com/kernel/common	android13-5.15	.	compare Android common changes against clean 5.15 donor
+miro-vendor-kernel	unknown	unknown	unknown	required when located; physical device reports 5.15.149-android13-8-g8407b75767d0-dirty
+miro-pinctrl	unknown	unknown	unknown	do not substitute SC9860 implementation
+miro-usb-controller-phy	unknown	unknown	unknown	obtain from MIRO device tree/vendor source
