@@ -91,3 +91,18 @@ The components above are only a first-wave comparison table. They are not the bo
 Keep source-family provenance explicit. AOSP, CyanogenMod, LineageOS, GrapheneOS, CalyxOS, crDroid, BlissOS, Android-x86, /e/OS, DivestOS, and later additions should remain distinguishable even when they share most Git objects.
 
 Cheap-phone changes remain another separately attributable layer. Physical-device observations remain separate from emulator and generic-platform evidence.
+
+
+## MIRO A1 kernel foundation
+
+Physical receipt on 2026-09-26 identifies the target as `sp9863a` / `s9863a1h10_go_32b` with a vendor kernel reporting `5.15.149-android13-8-g8407b75767d0-dirty`.
+
+The first clean kernel donor is the official Linux 5.15 stable line, pinned initially to `v5.15.149`. Keep the Android common 5.15 line and the eventual MIRO vendor kernel as comparison/provenance sources rather than silently mixing them.
+
+The initial hardware-support set is:
+
+`UART -> I2C -> SPI -> GPIO/EIC -> DMA -> clocks -> regulator/reset/pinctrl infrastructure -> eMMC/SD/SDIO -> USB`
+
+Mainline Linux already contains Spreadtrum/UNISOC implementations for UART, I2C, SPI, GPIO/EIC, DMA, SC9863A clocks and the Spreadtrum SDHCI controller. See `kernel/README.md`, `kernel/SOURCES.tsv`, `kernel/miro-a1.config`, `hardware/miro-a1/README.md`, and `hardware/sc9863a/README.md`.
+
+Do not substitute nearby SoC support for missing board-specific evidence. In particular, the upstream 1H10 device tree is a reference, not proof of MIRO board wiring, and an SC9860-specific pinctrl implementation is not an SC9863A pin map.

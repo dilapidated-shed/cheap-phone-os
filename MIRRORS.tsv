@@ -13,3 +13,8 @@ blissos-manifest	https://github.com/BlissOS/platform_manifest.git	x86 and Androi
 android-x86-manifest	https://github.com/android-x86/manifest.git	x86 Android port manifest
 eos-manifest	https://gitlab.e.foundation/e/os/android.git	/e/OS downstream manifest
 divestos-build	https://github.com/Divested-Mobile/DivestOS-Build.git	historical privacy/security and end-of-life-device build corpus
+linux-sprd-sharkl3	https://github.com/strongtz/linux-sprd.git	public Spreadtrum/UNISOC kernel corpus with SharkL3 defconfig and vendor diffconfig
+motorola-kernel-sprd	https://github.com/MotorolaMobilityLLC/kernel-sprd.git	public Motorola UNISOC kernel corpus containing exact sp9863a-1h10_go_32b overlay
+retroid-sprd-kernel	https://github.com/turtleletortue/android_kernel_retroid_pocket2plus.git	public SC9863A/SharkL3 kernel corpus with 1H10 board configuration
+jingpad-sharkl3-device	https://github.com/jingpad-bsp/device_sprd_sharkl3.git	public UNISOC SharkL3 device corpus containing exact s9863a1h10_go_32b target
+sprd-stuff	https://github.com/coldraintea/SPRD-stuff.git	public Spreadtrum BSP fragments containing exact s9863a1h10_go_32b product configuration

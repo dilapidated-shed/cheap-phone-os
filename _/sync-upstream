@@ -22,6 +22,6 @@ cd "$checkout"
     --partial-clone \
     --no-use-superproject \
     -b cheap-phone-manifest \
-    -u https://github.com/isomorphisms/cheap-phone-os
+    -u https://github.com/dilapidated-shed/cheap-phone-os
 
 "$repo_bin" sync -c -j"$jobs"
