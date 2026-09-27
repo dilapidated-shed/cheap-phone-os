@@ -97,3 +97,90 @@ Interpretation:
 - `focaltech_ats.ko` is strong corroboration for the exact-target SC9863A reference, which uses FocalTech FT5436 over I2C3;
 - `il79451a_touch_spi.ko` proves the stock vendor image also carries an Ilitek SPI touchscreen option, so module presence alone cannot identify the installed MIRO panel;
 - the selected controller still needs to be established from accessible vendor configuration/module-load metadata or a higher-privilege shell/device-tree receipt.
+
+
+## Physical MIRO adaptive-touch configuration — 2026-09-27
+
+The stock MIRO's readable `/vendor/etc/sinput/adaptive_ts.conf` contains:
+
+```text
+int_pin_offset   0x58
+rst_pin_offset   0x5c
+int_gpio_num     14
+rst_gpio_num     15
+pin_fun_mask     0x30
+int_fun_ns       3
+int_fun_se       2
+rst_fun_ns       3
+rst_fun_se       2
+spi_max_speed_hz 0
+width            720
+height           1280
+i2c_intf         3
+i2c_bus          3
+i2c_addr         0x38
+spi_intf         0
+spi_bus          0
+spi_chip_select  0
+spi_mode         0
+spi_bits_per_word 0
+vendor           focaltech
+product          FT5x46
+```
+
+This physically observed stock configuration confirms that this MIRO build is configured for a **FocalTech FT5x46-family touchscreen over I2C bus 3 at address 0x38**, not the alternate Ilitek SPI path also shipped in the vendor module set.
+
+The same values through the I2C/controller fields are present in public UNISOC-derived `s9863a1h10/sinput_conf/stp.conf` sources. That is a direct match between the stock MIRO configuration and the public SC9863A 1H10 BSP target.
+
+### GPIO numbering
+
+The secure-input configuration names:
+
+```text
+interrupt GPIO 14
+reset GPIO     15
+```
+
+while the older Linux board overlay for the same target names:
+
+```text
+reset     AP GPIO 145
+interrupt AP GPIO 144
+```
+
+and the adaptive-touch Linux binding defines the `gpios` order as reset then interrupt.
+
+The role assignment is therefore consistent across both sources. The numeric schemes differ by 130 in this case. Do not yet treat `14 -> 144` and `15 -> 145` as a proven general GPIO-number translation rule; preserve both numbering domains until the secure-input GPIO mapping source or the MIRO's merged DT is recovered.
+
+### Current touchscreen map
+
+```text
+controller family   FocalTech FT5x46       confirmed from stock vendor config
+transport           I2C                    confirmed from stock vendor config
+I2C interface       3                      confirmed from stock vendor config
+I2C bus             3                      confirmed from stock vendor config
+I2C address         0x38                   confirmed from stock vendor config
+surface             720 x 1280             confirmed from stock vendor config
+
+Linux reference:
+MMIO controller     I2C3 @ 0x70800000
+bus frequency       400 kHz
+enable clock        CLK_I2C3_EB
+I2C clock           CLK_AP_I2C3
+source clock        ext_26m
+SCL/SDA             SCL3 / SDA3
+
+secure-touch config:
+interrupt number    14
+reset number        15
+interrupt pin off   0x58
+reset pin off       0x5c
+
+Linux reference:
+interrupt           AP GPIO 144
+reset               AP GPIO 145
+
+power rail          unresolved
+```
+
+The exact physical regulator remains unresolved. The old adaptive-touch DT binding supports an `avdd-supply`, but the public SC9863A 1H10 touchscreen node does not specify one. The driver only explicitly enables a regulator when that property is present, so the reference design may rely on an always-on/shared rail or power managed outside this node. Do not invent the rail.
