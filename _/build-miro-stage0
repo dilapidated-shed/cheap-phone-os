@@ -1,0 +1,90 @@
+#!/bin/sh
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+source_dir=${MIRO_STAGE0_KERNEL_DIR:-"$root/_/miro-stage0-kernel"}
+out=${MIRO_STAGE0_OUT:-"$root/_/out/miro-stage0-kernel"}
+artifacts=${MIRO_STAGE0_ARTIFACTS:-"$root/_/artifacts/miro-stage0"}
+cross=${CROSS_COMPILE:-arm-linux-gnueabi-}
+jobs=${JOBS:-}
+
+if [ -z "$jobs" ]; then
+    if command -v nproc >/dev/null 2>&1; then
+        jobs=$(nproc)
+    else
+        jobs=2
+    fi
+fi
+
+if [ ! -d "$source_dir/.git" ]; then
+    printf 'kernel source missing: %s\n' "$source_dir" >&2
+    printf 'run: sh _/sync-miro-stage0-kernel\n' >&2
+    exit 1
+fi
+
+for program in make cpio gzip sha256sum "${cross}gcc"
+do
+    if ! command -v "$program" >/dev/null 2>&1; then
+        printf 'missing build tool: %s\n' "$program" >&2
+        exit 1
+    fi
+done
+
+if [ -t 1 ]; then
+    bold=$(printf '\033[1m')
+    green=$(printf '\033[32m')
+    reset=$(printf '\033[0m')
+else
+    bold=
+    green=
+    reset=
+fi
+
+printf '%s%sMIRO stage-0 build%s\n' "$bold" "$green" "$reset"
+printf 'kernel:    %s\n' "$source_dir"
+printf 'out:       %s\n' "$out"
+printf 'artifacts: %s\n' "$artifacts"
+printf 'compiler:  %sgcc\n' "$cross"
+
+mkdir -p "$out" "$artifacts"
+
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross"     sprd_sharkl3_defconfig
+
+(
+    cd "$source_dir"
+    ARCH=arm CROSS_COMPILE="$cross"         scripts/kconfig/merge_config.sh -m -O "$out"         "$out/.config" "$root/kernel/miro-a1-stage0.config"
+)
+
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross"     olddefconfig
+
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross"     -j"$jobs" zImage
+
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross"     BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3     -j"$jobs"     sp9863a.dtb sp9863a-1h10_go_32b-overlay.dtbo
+
+rootfs="$out/stage0-rootfs"
+rm -rf "$rootfs"
+mkdir -p "$rootfs/dev" "$rootfs/proc" "$rootfs/sys" "$rootfs/tmp"
+
+"${cross}gcc" -Os -static -s -Wall -Wextra     -o "$rootfs/init" "$root/initramfs/miro-a1/init.c"
+chmod 0755 "$rootfs/init"
+
+(
+    cd "$rootfs"
+    find . -print0 |
+        sort -z |
+        cpio --null --create --format=newc --owner=0:0 2>/dev/null |
+        gzip -9n
+) > "$artifacts/initramfs.cpio.gz"
+
+cp "$out/arch/arm/boot/zImage"    "$artifacts/zImage"
+cp "$out/arch/arm/boot/dts/sp9863a.dtb"    "$artifacts/sp9863a.dtb"
+cp "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo"    "$artifacts/sp9863a-1h10_go_32b-overlay.dtbo"
+cp "$out/.config" "$artifacts/kernel.config"
+
+(
+    cd "$artifacts"
+    sha256sum         zImage         sp9863a.dtb         sp9863a-1h10_go_32b-overlay.dtbo         initramfs.cpio.gz         kernel.config > SHA256SUMS
+)
+
+printf '\n%s%sartifacts ready%s\n' "$bold" "$green" "$reset"
+cat "$artifacts/SHA256SUMS"
