@@ -21,7 +21,7 @@ sprd_sharkl3_defconfig
 arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dts
 ```
 
-The exact public board-family overlay is still reference evidence rather than proof of every MIRO component. Stage 0 is a **bring-up donor**, not the intended long-term kernel.
+The exact public board-family overlay is still reference evidence rather than proof of every MIRO component. It includes reference display, charger, camera and GPIO choices that must not silently become MIRO facts. The bundle therefore names it `reference-board-...dtbo` and does not define it as the physical boot overlay. Stage 0 is a **bring-up donor**, not the intended long-term kernel.
 
 ### 5.15.149 reference / forward-port lane
 
@@ -35,12 +35,12 @@ Therefore do not pretend that upstream 5.15.149 can simply be configured as the 
 
 ## Stage-0 artifact boundary
 
-The stage-0 build produces separate, inspectable pieces:
+The stage-0 build produces separate, inspectable pieces. The names deliberately distinguish the donor/reference device trees from recovered physical MIRO data:
 
 ```text
 zImage
-sp9863a.dtb
-sp9863a-1h10_go_32b-overlay.dtbo
+donor-base-sp9863a.dtb
+reference-board-sp9863a-1h10_go_32b-overlay.dtbo
 initramfs.cpio.gz
 SHA256SUMS
 ```
