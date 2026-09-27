@@ -21,3 +21,6 @@ vendor-derived-kernel-retroid	https://github.com/turtleletortue/android_kernel_r
 exact-board-device-config	https://github.com/jingpad-bsp/device_sprd_sharkl3.git	public snapshot	s9863a1h10_go_32b/	exact target string reported by MIRO; reference configuration, not MIRO proof
 exact-board-bsp-fragments	https://github.com/coldraintea/SPRD-stuff.git	public snapshot	sharkl3/s9863a1h10_go_32b/	exact target product fragments and properties
 full-bsp-reference	https://github.com/deadman96385/jingpad_android_bsp.git	public snapshot	device/sharkl3/androidq/s9863a1h10_go_32b/	large topology/reference corpus; do not assume exact MIRO board contents
+stage0-arm32-kernel	https://github.com/MotorolaMobilityLLC/kernel-sprd.git	c4e610cd833c47f08969678fa58f9bfcb57bd3a5	.	first buildable donor; Linux/arm 4.14.199, not long-term kernel choice
+stage0-arm32-defconfig	https://github.com/MotorolaMobilityLLC/kernel-sprd.git	c4e610cd833c47f08969678fa58f9bfcb57bd3a5	arch/arm/configs/sprd_sharkl3_defconfig	ARM32 SharkL3 build configuration
+stage0-exact-family-dtbo	https://github.com/MotorolaMobilityLLC/kernel-sprd.git	c4e610cd833c47f08969678fa58f9bfcb57bd3a5	arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dts	exact public board-family overlay; reference evidence, not complete MIRO proof
