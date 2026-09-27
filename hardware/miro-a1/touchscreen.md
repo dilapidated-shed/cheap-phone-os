@@ -57,7 +57,7 @@ These values are a hypothesis for the MIRO A1, not a physical receipt. Run:
 sh _/inspect-miro-touchscreen
 ```
 
-against the connected stock MIRO. Record the output before promoting any reference value to a MIRO fact.
+directly in Termux on the stock MIRO. The script reads the running phone's live device tree and sysfs locally. Use `--adb` only when deliberately probing a different connected Android device. Record the output before promoting any reference value to a MIRO fact.
 
 ## Evidence sources
 

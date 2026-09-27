@@ -1,12 +1,28 @@
 #!/bin/sh
 set -eu
 
-adb_bin=${ADB:-adb}
+# Run directly on the MIRO by default.
+#
+# Optional remote mode, for inspecting another Android device:
+#     sh _/inspect-miro-touchscreen --adb
+#
+# In remote mode we feed this same script to the target's shell without
+# --adb, so the actual probe still reads the target's /sys and device tree
+# locally.
+if [ "${1:-}" = "--adb" ]; then
+    adb_bin=${ADB:-adb}
+    "$adb_bin" shell sh -s < "$0"
+    exit
+fi
 
-"$adb_bin" shell '
-set -u
-
-root=/sys/firmware/devicetree/base
+if [ -d /sys/firmware/devicetree/base ]; then
+    root=/sys/firmware/devicetree/base
+elif [ -d /proc/device-tree ]; then
+    root=/proc/device-tree
+else
+    echo "No live device tree found at /sys/firmware/devicetree/base or /proc/device-tree."
+    exit 1
+fi
 
 text_property()
 {
@@ -28,14 +44,25 @@ hex_property()
     fi
 }
 
+echo "== Platform =="
+getprop ro.board.platform 2>/dev/null || true
+getprop ro.hardware 2>/dev/null || true
+getprop ro.boot.hardware 2>/dev/null || true
+
+echo
 echo "== I2C devices =="
+found_i2c=false
 for d in /sys/bus/i2c/devices/*
 do
     [ -e "$d" ] || continue
     [ -r "$d/name" ] || continue
+    found_i2c=true
     printf "%s  " "$(basename "$d")"
     cat "$d/name"
 done
+if [ "$found_i2c" = false ]; then
+    echo "(none visible to this process)"
+fi
 
 echo
 echo "== Touchscreen device-tree candidates =="
@@ -45,6 +72,16 @@ printf "%s\n" "$nodes"
 node=$(printf "%s\n" "$nodes" | sed -n "1p")
 if [ -z "$node" ]; then
     echo "No touchscreen-named DT node found."
+    echo
+    echo "== Input devices =="
+    for d in /sys/class/input/event*
+    do
+        [ -e "$d" ] || continue
+        if [ -r "$d/device/name" ]; then
+            printf "%s  " "$(basename "$d")"
+            cat "$d/device/name"
+        fi
+    done
     exit 0
 fi
 
@@ -78,11 +115,13 @@ hex_property "$parent/pinctrl-1" pinctrl-1
 
 echo
 echo "== Matching Linux I2C device =="
+matched=false
 for d in /sys/bus/i2c/devices/*
 do
     [ -e "$d" ] || continue
     of=$(readlink -f "$d/of_node" 2>/dev/null || true)
     if [ "$of" = "$node" ]; then
+        matched=true
         echo "device: $(basename "$d")"
         [ -r "$d/name" ] && { printf "name: "; cat "$d/name"; }
         [ -r "$d/modalias" ] && { printf "modalias: "; cat "$d/modalias"; }
@@ -90,6 +129,9 @@ do
         [ -n "$driver" ] && echo "driver: $driver"
     fi
 done
+if [ "$matched" = false ]; then
+    echo "(no matching sysfs I2C device visible)"
+fi
 
 echo
 echo "== Input devices =="
@@ -101,4 +143,3 @@ do
         cat "$d/device/name"
     fi
 done
-'
