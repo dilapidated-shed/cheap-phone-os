@@ -79,7 +79,7 @@ sh _/sync-miro-stage0-toolchain
 sh _/build-miro-stage0
 ```
 
-The vendor kernel is compiled with AOSP's `arm-linux-androideabi-4.9` toolchain. The tiny initramfs uses a normal `arm-linux-gnueabi-` cross compiler so it can link a small static libc program without pulling Android userspace into the boot proof.
+The vendor kernel and tiny init are both compiled with the pinned AOSP `arm-linux-androideabi-4.9` toolchain. The init is freestanding and uses only the Linux ARM EABI syscall interface: no libc, Android runtime, or dynamic linker is present.
 
 The build is cwd-independent. Defaults:
 
@@ -87,11 +87,10 @@ The build is cwd-independent. Defaults:
 kernel source  _/miro-stage0-kernel
 kernel output  _/out/miro-stage0-kernel
 artifacts      _/artifacts/miro-stage0
-kernel compiler _/toolchains/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
-init compiler   arm-linux-gnueabi-
+kernel/init compiler _/toolchains/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
 ```
 
-Override them with `MIRO_STAGE0_KERNEL_DIR`, `MIRO_STAGE0_TOOLCHAIN_DIR`, `MIRO_STAGE0_OUT`, `MIRO_STAGE0_ARTIFACTS`, `KERNEL_CROSS_COMPILE`, `INIT_CROSS_COMPILE`, or `JOBS`.
+Override them with `MIRO_STAGE0_KERNEL_DIR`, `MIRO_STAGE0_TOOLCHAIN_DIR`, `MIRO_STAGE0_OUT`, `MIRO_STAGE0_ARTIFACTS`, `KERNEL_CROSS_COMPILE` or `JOBS`.
 
 GitHub Actions also runs the same scripts so the phone does not need a compiler installed locally.
 
