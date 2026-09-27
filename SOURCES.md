@@ -103,6 +103,6 @@ The initial hardware-support set is:
 
 `UART -> I2C -> SPI -> GPIO/EIC -> DMA -> clocks -> regulator/reset/pinctrl infrastructure -> eMMC/SD/SDIO -> USB`
 
-Mainline Linux already contains Spreadtrum/UNISOC implementations for UART, I2C, SPI, GPIO/EIC, DMA, SC9863A clocks and the Spreadtrum SDHCI controller. See `kernel/README.md`, `kernel/SOURCES.tsv`, `kernel/miro-a1.config` and `hardware/miro-a1/README.md`.
+Mainline Linux already contains Spreadtrum/UNISOC implementations for UART, I2C, SPI, GPIO/EIC, DMA, SC9863A clocks and the Spreadtrum SDHCI controller. See `kernel/README.md`, `kernel/SOURCES.tsv`, `kernel/miro-a1.config`, `hardware/miro-a1/README.md`, and `hardware/sc9863a/README.md`.
 
 Do not substitute nearby SoC support for missing board-specific evidence. In particular, the upstream 1H10 device tree is a reference, not proof of MIRO board wiring, and an SC9860-specific pinctrl implementation is not an SC9863A pin map.
