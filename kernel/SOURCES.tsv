@@ -15,3 +15,9 @@ android-common-comparison	https://android.googlesource.com/kernel/common	android
 miro-vendor-kernel	unknown	unknown	unknown	required when located; physical device reports 5.15.149-android13-8-g8407b75767d0-dirty
 miro-pinctrl	unknown	unknown	unknown	do not substitute SC9860 implementation
 miro-usb-controller-phy	unknown	unknown	unknown	obtain from MIRO device tree/vendor source
+vendor-derived-kernel-sharkl3	https://github.com/strongtz/linux-sprd.git	public snapshot	arch/arm/configs/sprd_sharkl3_defconfig; sprd-diffconfig/	public UNISOC/Spreadtrum-derived kernel source; useful for SharkL3/vendor deltas
+vendor-derived-kernel-motorola	https://github.com/MotorolaMobilityLLC/kernel-sprd.git	public snapshot	arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dts	contains exact s9863a1h10_go_32b board-family overlay
+vendor-derived-kernel-retroid	https://github.com/turtleletortue/android_kernel_retroid_pocket2plus.git	public snapshot	sprd-board-config/sharkl3/sp9863a_1h10/	contains SC9863A 1H10 board config selecting sprd_sharkl3_defconfig and sp9863a-1h10 DTB
+exact-board-device-config	https://github.com/jingpad-bsp/device_sprd_sharkl3.git	public snapshot	s9863a1h10_go_32b/	exact target string reported by MIRO; reference configuration, not MIRO proof
+exact-board-bsp-fragments	https://github.com/coldraintea/SPRD-stuff.git	public snapshot	sharkl3/s9863a1h10_go_32b/	exact target product fragments and properties
+full-bsp-reference	https://github.com/deadman96385/jingpad_android_bsp.git	public snapshot	device/sharkl3/androidq/s9863a1h10_go_32b/	large topology/reference corpus; do not assume exact MIRO board contents
