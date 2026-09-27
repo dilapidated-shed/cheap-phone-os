@@ -3,9 +3,19 @@ set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 source_dir=${MIRO_STAGE0_KERNEL_DIR:-"$root/_/miro-stage0-kernel"}
+toolchain_dir=${MIRO_STAGE0_TOOLCHAIN_DIR:-"$root/_/toolchains/arm-linux-androideabi-4.9"}
 out=${MIRO_STAGE0_OUT:-"$root/_/out/miro-stage0-kernel"}
 artifacts=${MIRO_STAGE0_ARTIFACTS:-"$root/_/artifacts/miro-stage0"}
-cross=${CROSS_COMPILE:-arm-linux-gnueabi-}
+
+if [ -n "${KERNEL_CROSS_COMPILE:-}" ]; then
+    kernel_cross=$KERNEL_CROSS_COMPILE
+elif [ -x "$toolchain_dir/bin/arm-linux-androideabi-gcc" ]; then
+    kernel_cross="$toolchain_dir/bin/arm-linux-androideabi-"
+else
+    kernel_cross=${CROSS_COMPILE:-arm-linux-gnueabi-}
+fi
+
+init_cross=${INIT_CROSS_COMPILE:-arm-linux-gnueabi-}
 jobs=${JOBS:-}
 
 if [ -z "$jobs" ]; then
@@ -22,7 +32,7 @@ if [ ! -d "$source_dir/.git" ]; then
     exit 1
 fi
 
-for program in make cpio gzip sha256sum "${cross}gcc"
+for program in make cpio gzip sha256sum "${kernel_cross}gcc" "${init_cross}gcc"
 do
     if ! command -v "$program" >/dev/null 2>&1; then
         printf 'missing build tool: %s\n' "$program" >&2
@@ -41,23 +51,24 @@ else
 fi
 
 printf '%s%sMIRO stage-0 build%s\n' "$bold" "$green" "$reset"
-printf 'kernel:    %s\n' "$source_dir"
-printf 'out:       %s\n' "$out"
-printf 'artifacts: %s\n' "$artifacts"
-printf 'compiler:  %sgcc\n' "$cross"
+printf 'kernel:          %s\n' "$source_dir"
+printf 'out:             %s\n' "$out"
+printf 'artifacts:       %s\n' "$artifacts"
+printf 'kernel compiler: %sgcc\n' "$kernel_cross"
+printf 'init compiler:   %sgcc\n' "$init_cross"
 
 mkdir -p "$out" "$artifacts"
 
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross" sprd_sharkl3_defconfig
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" sprd_sharkl3_defconfig
 
 (
     cd "$source_dir"
-    ARCH=arm CROSS_COMPILE="$cross" scripts/kconfig/merge_config.sh -m -O "$out" "$out/.config" "$root/kernel/miro-a1-stage0.config"
+    ARCH=arm CROSS_COMPILE="$kernel_cross" scripts/kconfig/merge_config.sh -m -O "$out" "$out/.config" "$root/kernel/miro-a1-stage0.config"
 )
 
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross" olddefconfig
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross" -j"$jobs" zImage
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross" BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3 -j"$jobs" dtbs
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" olddefconfig
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" -j"$jobs" zImage
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3 -j"$jobs" dtbs
 
 for built in "$out/arch/arm/boot/dts/sp9863a.dtb" "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo"
 do
@@ -71,7 +82,7 @@ rootfs="$out/stage0-rootfs"
 rm -rf "$rootfs"
 mkdir -p "$rootfs/dev" "$rootfs/proc" "$rootfs/sys" "$rootfs/tmp"
 
-"${cross}gcc" -Os -static -s -Wall -Wextra -o "$rootfs/init" "$root/initramfs/miro-a1/init.c"
+"${init_cross}gcc" -Os -static -s -Wall -Wextra -o "$rootfs/init" "$root/initramfs/miro-a1/init.c"
 chmod 0755 "$rootfs/init"
 
 (
