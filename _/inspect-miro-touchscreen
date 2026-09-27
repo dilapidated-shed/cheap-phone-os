@@ -78,6 +78,37 @@ if [ -z "$node" ]; then
     getprop 2>/dev/null | grep -iE "touch|focal|ft5|fts|goodix|panel|lcd" || echo "(no matching properties visible)"
 
     echo
+    echo "== Local fallback: adaptive touchscreen config =="
+    for cfg in /vendor/etc/sinput/adaptive_ts.conf /vendor/etc/sinput/fts_ts.conf /vendor/etc/sinput/NVTCapacitiveTouchScreen.conf
+    do
+        if [ -r "$cfg" ]; then
+            echo "--- $cfg"
+            cat "$cfg"
+        fi
+    done
+
+    echo
+    echo "== Local fallback: module load metadata =="
+    found_module_metadata=false
+    for meta in \
+        /vendor_dlkm/lib/modules/modules.load \
+        /vendor_dlkm/lib/modules/modules.load.recovery \
+        /vendor_dlkm/lib/modules/modules.dep \
+        /vendor_dlkm/lib/modules/modules.alias \
+        /vendor/etc/modules.load \
+        /odm/etc/modules.load
+    do
+        [ -r "$meta" ] || continue
+        matches=$(grep -iE "focal|ft5|fts|il79451|touch|adaptive|novatek|nvt" "$meta" 2>/dev/null || true)
+        if [ -n "$matches" ]; then
+            found_module_metadata=true
+            echo "--- $meta"
+            printf "%s\n" "$matches"
+        fi
+    done
+    [ "$found_module_metadata" = true ] || echo "(no matching accessible module-load metadata)"
+
+    echo
     echo "== Local fallback: loaded modules =="
     if [ -r /proc/modules ]; then
         grep -iE "touch|focal|ft5|fts|goodix|adaptive" /proc/modules || echo "(no matching loaded modules)"
