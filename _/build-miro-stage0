@@ -15,7 +15,6 @@ else
     kernel_cross=${CROSS_COMPILE:-arm-linux-gnueabi-}
 fi
 
-init_cross=${INIT_CROSS_COMPILE:-arm-linux-gnueabi-}
 jobs=${JOBS:-}
 
 if [ -z "$jobs" ]; then
@@ -32,7 +31,7 @@ if [ ! -d "$source_dir/.git" ]; then
     exit 1
 fi
 
-for program in make cpio gzip sha256sum "${kernel_cross}gcc" "${init_cross}gcc"
+for program in make cpio gzip sha256sum "${kernel_cross}gcc"
 do
     if ! command -v "$program" >/dev/null 2>&1; then
         printf 'missing build tool: %s\n' "$program" >&2
@@ -55,7 +54,6 @@ printf 'kernel:          %s\n' "$source_dir"
 printf 'out:             %s\n' "$out"
 printf 'artifacts:       %s\n' "$artifacts"
 printf 'kernel compiler: %sgcc\n' "$kernel_cross"
-printf 'init compiler:   %sgcc\n' "$init_cross"
 
 mkdir -p "$out" "$artifacts"
 
@@ -82,7 +80,7 @@ rootfs="$out/stage0-rootfs"
 rm -rf "$rootfs"
 mkdir -p "$rootfs/dev" "$rootfs/proc" "$rootfs/sys" "$rootfs/tmp"
 
-"${init_cross}gcc" -Os -static -s -Wall -Wextra -o "$rootfs/init" "$root/initramfs/miro-a1/init.c"
+"${kernel_cross}gcc" -march=armv7-a -mfloat-abi=soft -Os -ffreestanding -fno-builtin -fno-stack-protector -fomit-frame-pointer -Wall -Wextra -Werror -nostdlib -static -Wl,-e,_start -Wl,--build-id=none -o "$rootfs/init" "$root/initramfs/miro-a1/init.c"
 chmod 0755 "$rootfs/init"
 
 (
