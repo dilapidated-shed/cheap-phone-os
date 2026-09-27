@@ -66,3 +66,16 @@ vendor Boot ROM / SPL / early firmware / U-Boot
 ```
 
 The first device-support tranche is UART, I2C, SPI, GPIO/EIC, DMA, clocks, regulators/reset infrastructure, eMMC/SD and USB plumbing. Display, touch, battery/charging, sensors, audio, radio, Wi-Fi/Bluetooth and cameras follow only with board-specific evidence.
+
+
+## Public source match for this target
+
+The exact target name `s9863a1h10_go_32b` appears in public UNISOC-derived source trees, including:
+
+- `jingpad-bsp/device_sprd_sharkl3/s9863a1h10_go_32b/`
+- Motorola's public UNISOC kernel overlay `sp9863a-1h10_go_32b-overlay.dts`
+- additional SharkL3 board configuration in public Spreadtrum-derived kernel trees.
+
+This establishes a much stronger reference baseline than the generic mainline 1H10 board. It still does not establish that any one public overlay is the MIRO overlay. Compare it against the MIRO's raw `dtb_a` and `dtbo_a`.
+
+See `../sc9863a/README.md` for the documentation and BSP source map.
