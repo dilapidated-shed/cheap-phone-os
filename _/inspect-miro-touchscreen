@@ -72,16 +72,66 @@ printf "%s\n" "$nodes"
 node=$(printf "%s\n" "$nodes" | sed -n "1p")
 if [ -z "$node" ]; then
     echo "No touchscreen-named DT node found."
+
+    echo
+    echo "== Local fallback: properties =="
+    getprop 2>/dev/null | grep -iE "touch|focal|ft5|fts|goodix|panel|lcd" || echo "(no matching properties visible)"
+
+    echo
+    echo "== Local fallback: loaded modules =="
+    if [ -r /proc/modules ]; then
+        grep -iE "touch|focal|ft5|fts|goodix|adaptive" /proc/modules || echo "(no matching loaded modules)"
+    else
+        echo "/proc/modules not readable"
+    fi
+
+    echo
+    echo "== Local fallback: module/file names =="
+    found_files=false
+    for base in /vendor/lib/modules /vendor_dlkm/lib/modules /odm/lib/modules /vendor/etc /odm/etc /vendor/firmware
+    do
+        [ -d "$base" ] || continue
+        matches=$(find "$base" -maxdepth 4 -type f 2>/dev/null | grep -iE "touch|focal|ft5|fts|goodix|adaptive" || true)
+        if [ -n "$matches" ]; then
+            found_files=true
+            printf "%s\n" "$matches"
+        fi
+    done
+    [ "$found_files" = true ] || echo "(no matching accessible files)"
+
+    echo
+    echo "== Local fallback: /proc input inventory =="
+    if [ -r /proc/bus/input/devices ]; then
+        cat /proc/bus/input/devices
+    else
+        echo "/proc/bus/input/devices not readable"
+    fi
+
+    echo
+    echo "== Local fallback: Android input service =="
+    if command -v dumpsys >/dev/null 2>&1; then
+        dumpsys input 2>&1 | sed -n "1,160p"
+    else
+        echo "dumpsys not available in PATH"
+    fi
+
+    echo
+    echo "== Local fallback: sysfs names =="
+    find /sys/devices /sys/module -maxdepth 6 \( -iname "*touch*" -o -iname "*focal*" -o -iname "*ft5*" -o -iname "*goodix*" -o -iname "*adaptive*" \) 2>/dev/null | sed -n "1,160p"
+
     echo
     echo "== Input devices =="
+    visible_input=false
     for d in /sys/class/input/event*
     do
         [ -e "$d" ] || continue
         if [ -r "$d/device/name" ]; then
+            visible_input=true
             printf "%s  " "$(basename "$d")"
             cat "$d/device/name"
         fi
     done
+    [ "$visible_input" = true ] || echo "(none visible to this process)"
     exit 0
 fi
 
