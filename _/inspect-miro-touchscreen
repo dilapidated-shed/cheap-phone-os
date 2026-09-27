@@ -1,0 +1,104 @@
+#!/bin/sh
+set -eu
+
+adb_bin=${ADB:-adb}
+
+"$adb_bin" shell '
+set -u
+
+root=/sys/firmware/devicetree/base
+
+text_property()
+{
+    file=$1
+    label=$2
+    if [ -r "$file" ]; then
+        printf "%s: " "$label"
+        tr "\000" "\n" < "$file"
+    fi
+}
+
+hex_property()
+{
+    file=$1
+    label=$2
+    if [ -r "$file" ]; then
+        printf "%s:" "$label"
+        od -An -tx1 "$file" | tr -s " "
+    fi
+}
+
+echo "== I2C devices =="
+for d in /sys/bus/i2c/devices/*
+do
+    [ -e "$d" ] || continue
+    [ -r "$d/name" ] || continue
+    printf "%s  " "$(basename "$d")"
+    cat "$d/name"
+done
+
+echo
+echo "== Touchscreen device-tree candidates =="
+nodes=$(find "$root" -type d \( -name "touchscreen@*" -o -name "adaptive-touchscreen@*" -o -iname "*touchscreen*" \) 2>/dev/null || true)
+printf "%s\n" "$nodes"
+
+node=$(printf "%s\n" "$nodes" | sed -n "1p")
+if [ -z "$node" ]; then
+    echo "No touchscreen-named DT node found."
+    exit 0
+fi
+
+echo
+echo "== Selected live DT node =="
+echo "$node"
+text_property "$node/compatible" compatible
+text_property "$node/controller" controller
+text_property "$node/status" status
+hex_property "$node/reg" reg
+hex_property "$node/gpios" gpios
+
+for f in "$node"/*supply
+do
+    [ -e "$f" ] || continue
+    hex_property "$f" "$(basename "$f")"
+done
+
+parent=$(dirname "$node")
+echo
+echo "== Parent bus node =="
+echo "$parent"
+text_property "$parent/compatible" compatible
+text_property "$parent/status" status
+text_property "$parent/clock-names" clock-names
+hex_property "$parent/reg" reg
+hex_property "$parent/clock-frequency" clock-frequency
+hex_property "$parent/clocks" clocks
+hex_property "$parent/pinctrl-0" pinctrl-0
+hex_property "$parent/pinctrl-1" pinctrl-1
+
+echo
+echo "== Matching Linux I2C device =="
+for d in /sys/bus/i2c/devices/*
+do
+    [ -e "$d" ] || continue
+    of=$(readlink -f "$d/of_node" 2>/dev/null || true)
+    if [ "$of" = "$node" ]; then
+        echo "device: $(basename "$d")"
+        [ -r "$d/name" ] && { printf "name: "; cat "$d/name"; }
+        [ -r "$d/modalias" ] && { printf "modalias: "; cat "$d/modalias"; }
+        driver=$(readlink -f "$d/driver" 2>/dev/null || true)
+        [ -n "$driver" ] && echo "driver: $driver"
+    fi
+done
+
+echo
+echo "== Input devices =="
+for d in /sys/class/input/event*
+do
+    [ -e "$d" ] || continue
+    if [ -r "$d/device/name" ]; then
+        printf "%s  " "$(basename "$d")"
+        cat "$d/device/name"
+    fi
+done
+'
