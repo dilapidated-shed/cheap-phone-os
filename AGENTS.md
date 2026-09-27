@@ -22,6 +22,7 @@
 - Prefer new work on branches and conservative merges.
 - Low-memory behavior is an explicit target; do not silently generalize device-specific observations into platform-wide claims.
 - Evidence from emulators, generic AOSP targets, and physical phones must be labeled separately.
+- The active MIRO A1 source/build tree is the demonstrated dependency closure for that phone, not the whole AOSP manifest. Keep broad source/history mirroring as a separate archival concern; do not build unrelated architectures or hardware merely for completeness.
 
 ## Layout
 
