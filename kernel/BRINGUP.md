@@ -97,6 +97,14 @@ GitHub Actions also runs the same scripts so the phone does not need a compiler 
 
 ## Physical-boot gate
 
+The stock phone can collect the next evidence locally, without ADB or fastboot:
+
+```sh
+sh _/inspect-miro-boot
+```
+
+The probe is read-only. It records boot properties, current slot information when exposed, named partition links/readability, bootconfig/cmdline visibility, fstab candidates, and live device-tree chosen properties.
+
 Do not flash Stage 0 merely because it compiles. The next gate is:
 
 1. preserve/extract the stock boot inputs;
