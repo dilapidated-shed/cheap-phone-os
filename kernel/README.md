@@ -2,17 +2,26 @@
 
 The cheap-phone operating system does not inherit Android's userspace architecture by default. Linux is the initial hardware-support kernel because it already contains useful Spreadtrum/UNISOC mechanisms for the SC9863A family.
 
-## Starting donor
+## Kernel lanes
 
-The working donor is the official Linux 5.15 stable line, initially pinned to `v5.15.149` because the physical MIRO A1 reports a `5.15.149-android13-8-...` kernel. The pin is a compatibility starting point, not a claim that upstream Linux 5.15.149 is the phone's exact vendor kernel.
+The physical MIRO A1 reports a `5.15.149-android13-8-...` kernel, so official Linux `v5.15.149` remains the preferred clean reference and forward-port donor. However, upstream SC9863A board support in that tree is under `arch/arm64`, while the exact public `s9863a1h10_go_32b` BSP explicitly selects `BSP_BOARD_ARCH="arm"` and `sprd_sharkl3_defconfig`.
 
-Run:
+For the **first buildable stage-0 bundle**, use the pinned public Motorola/Spreadtrum-derived Linux 4.14.199 tree documented in [BRINGUP.md](BRINGUP.md). It contains the ARM32 SharkL3 defconfig and the exact `sp9863a-1h10_go_32b` board-family overlay. This is a bring-up donor, not the long-term kernel decision.
+
+Reference/forward-port lane:
 
 ```sh
 sh _/sync-kernel
 ```
 
-The checkout is materialized under `_/linux/` and is intentionally not flattened into this repository. Keep source provenance and licenses with the upstream tree.
+First ARM32 stage-0 build lane:
+
+```sh
+sh _/sync-miro-stage0-kernel
+sh _/build-miro-stage0
+```
+
+Both checkouts live under `_/` and are intentionally not flattened into this repository. Keep source provenance and licenses with each upstream tree.
 
 ## Already useful upstream mechanisms
 
