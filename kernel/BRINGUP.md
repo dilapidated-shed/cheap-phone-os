@@ -69,6 +69,8 @@ The touchscreen regulator is still not known. Stage 0 therefore **builds the exa
 
 The first physical boot does not require the touchscreen to work.
 
+Build and source-level validation receipts are recorded in [STAGE0-VALIDATION.md](STAGE0-VALIDATION.md). Keep compilation, boot-image packaging and physical-boot receipts distinct.
+
 ## Build
 
 Fetch the pinned donor and the donor-era AOSP GCC 4.9 toolchain, then build:
