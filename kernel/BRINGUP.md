@@ -71,12 +71,15 @@ The first physical boot does not require the touchscreen to work.
 
 ## Build
 
-On a machine with an ARM cross compiler:
+Fetch the pinned donor and the donor-era AOSP GCC 4.9 toolchain, then build:
 
 ```sh
 sh _/sync-miro-stage0-kernel
+sh _/sync-miro-stage0-toolchain
 sh _/build-miro-stage0
 ```
+
+The vendor kernel is compiled with AOSP's `arm-linux-androideabi-4.9` toolchain. The tiny initramfs uses a normal `arm-linux-gnueabi-` cross compiler so it can link a small static libc program without pulling Android userspace into the boot proof.
 
 The build is cwd-independent. Defaults:
 
@@ -84,10 +87,11 @@ The build is cwd-independent. Defaults:
 kernel source  _/miro-stage0-kernel
 kernel output  _/out/miro-stage0-kernel
 artifacts      _/artifacts/miro-stage0
-cross prefix   arm-linux-gnueabi-
+kernel compiler _/toolchains/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
+init compiler   arm-linux-gnueabi-
 ```
 
-Override them with `MIRO_STAGE0_KERNEL_DIR`, `MIRO_STAGE0_OUT`, `MIRO_STAGE0_ARTIFACTS`, `CROSS_COMPILE`, or `JOBS`.
+Override them with `MIRO_STAGE0_KERNEL_DIR`, `MIRO_STAGE0_TOOLCHAIN_DIR`, `MIRO_STAGE0_OUT`, `MIRO_STAGE0_ARTIFACTS`, `KERNEL_CROSS_COMPILE`, `INIT_CROSS_COMPILE`, or `JOBS`.
 
 GitHub Actions also runs the same scripts so the phone does not need a compiler installed locally.
 
