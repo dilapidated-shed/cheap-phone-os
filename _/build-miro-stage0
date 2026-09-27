@@ -91,13 +91,37 @@ chmod 0755 "$rootfs/init"
 ) > "$artifacts/initramfs.cpio.gz"
 
 cp "$out/arch/arm/boot/zImage" "$artifacts/zImage"
-cp "$out/arch/arm/boot/dts/sp9863a.dtb" "$artifacts/sp9863a.dtb"
-cp "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo" "$artifacts/sp9863a-1h10_go_32b-overlay.dtbo"
+cp "$out/arch/arm/boot/dts/sp9863a.dtb" "$artifacts/donor-base-sp9863a.dtb"
+cp "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo" "$artifacts/reference-board-sp9863a-1h10_go_32b-overlay.dtbo"
 cp "$out/.config" "$artifacts/kernel.config"
+
+cat > "$artifacts/ARTIFACTS.txt" <<'EOF'
+Cheap Phone OS — MIRO A1 stage 0
+
+zImage
+  ARM32 SharkL3 kernel from the pinned public vendor-derived donor.
+
+initramfs.cpio.gz
+  Tiny Cheap Phone OS stage-0 userspace.
+
+donor-base-sp9863a.dtb
+  Donor SoC/base device tree. Not yet the recovered physical MIRO device tree.
+
+reference-board-sp9863a-1h10_go_32b-overlay.dtbo
+  Exact public board-family reference overlay. Comparison evidence ONLY.
+  Do not flash or treat this as the physical MIRO overlay without reconciliation.
+
+kernel.config
+  Exact resolved kernel configuration used for this build.
+
+This directory is not a flashable boot image. Physical boot packaging waits for
+stock MIRO boot-image parameters, recovered DTB/DTBO evidence, and a tested
+recovery path.
+EOF
 
 (
     cd "$artifacts"
-    sha256sum zImage sp9863a.dtb sp9863a-1h10_go_32b-overlay.dtbo initramfs.cpio.gz kernel.config > SHA256SUMS
+    sha256sum zImage donor-base-sp9863a.dtb reference-board-sp9863a-1h10_go_32b-overlay.dtbo initramfs.cpio.gz kernel.config ARTIFACTS.txt > SHA256SUMS
 )
 
 printf '\n%s%sartifacts ready%s\n' "$bold" "$green" "$reset"
