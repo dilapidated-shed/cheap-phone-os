@@ -48,42 +48,45 @@ printf 'compiler:  %sgcc\n' "$cross"
 
 mkdir -p "$out" "$artifacts"
 
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross"     sprd_sharkl3_defconfig
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross" sprd_sharkl3_defconfig
 
 (
     cd "$source_dir"
-    ARCH=arm CROSS_COMPILE="$cross"         scripts/kconfig/merge_config.sh -m -O "$out"         "$out/.config" "$root/kernel/miro-a1-stage0.config"
+    ARCH=arm CROSS_COMPILE="$cross" scripts/kconfig/merge_config.sh -m -O "$out" "$out/.config" "$root/kernel/miro-a1-stage0.config"
 )
 
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross"     olddefconfig
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross" olddefconfig
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross" -j"$jobs" zImage
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross" BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3 -j"$jobs" dtbs
 
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross"     -j"$jobs" zImage
-
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$cross"     BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3     -j"$jobs"     sp9863a.dtb sp9863a-1h10_go_32b-overlay.dtbo
+for built in "$out/arch/arm/boot/dts/sp9863a.dtb" "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo"
+do
+    if [ ! -s "$built" ]; then
+        printf 'expected device-tree artifact missing: %s\n' "$built" >&2
+        exit 1
+    fi
+done
 
 rootfs="$out/stage0-rootfs"
 rm -rf "$rootfs"
 mkdir -p "$rootfs/dev" "$rootfs/proc" "$rootfs/sys" "$rootfs/tmp"
 
-"${cross}gcc" -Os -static -s -Wall -Wextra     -o "$rootfs/init" "$root/initramfs/miro-a1/init.c"
+"${cross}gcc" -Os -static -s -Wall -Wextra -o "$rootfs/init" "$root/initramfs/miro-a1/init.c"
 chmod 0755 "$rootfs/init"
 
 (
     cd "$rootfs"
-    find . -print0 |
-        sort -z |
-        cpio --null --create --format=newc --owner=0:0 2>/dev/null |
-        gzip -9n
+    find . -print0 | sort -z | cpio --null --create --format=newc --owner=0:0 2>/dev/null | gzip -9n
 ) > "$artifacts/initramfs.cpio.gz"
 
-cp "$out/arch/arm/boot/zImage"    "$artifacts/zImage"
-cp "$out/arch/arm/boot/dts/sp9863a.dtb"    "$artifacts/sp9863a.dtb"
-cp "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo"    "$artifacts/sp9863a-1h10_go_32b-overlay.dtbo"
+cp "$out/arch/arm/boot/zImage" "$artifacts/zImage"
+cp "$out/arch/arm/boot/dts/sp9863a.dtb" "$artifacts/sp9863a.dtb"
+cp "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo" "$artifacts/sp9863a-1h10_go_32b-overlay.dtbo"
 cp "$out/.config" "$artifacts/kernel.config"
 
 (
     cd "$artifacts"
-    sha256sum         zImage         sp9863a.dtb         sp9863a-1h10_go_32b-overlay.dtbo         initramfs.cpio.gz         kernel.config > SHA256SUMS
+    sha256sum zImage sp9863a.dtb sp9863a-1h10_go_32b-overlay.dtbo initramfs.cpio.gz kernel.config > SHA256SUMS
 )
 
 printf '\n%s%sartifacts ready%s\n' "$bold" "$green" "$reset"
