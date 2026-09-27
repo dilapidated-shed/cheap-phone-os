@@ -6,6 +6,7 @@ on:
       - ".github/workflows/miro-stage0.yml"
       - "_/build-miro-stage0"
       - "_/sync-miro-stage0-kernel"
+      - "_/sync-miro-stage0-toolchain"
       - "initramfs/miro-a1/**"
       - "kernel/BRINGUP.md"
       - "kernel/miro-a1-stage0.config"
@@ -20,11 +21,14 @@ jobs:
       - name: Check out Cheap Phone OS
         uses: actions/checkout@v4
 
-      - name: Install ARM32 build tools
+      - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y bc bison cpio flex gcc-arm-linux-gnueabi git libelf-dev libssl-dev libc6-dev-armel-cross make
 
       - name: Fetch pinned SharkL3 donor
         run: sh _/sync-miro-stage0-kernel
+
+      - name: Fetch pinned AOSP GCC 4.9
+        run: sh _/sync-miro-stage0-toolchain
 
       - name: Build stage-0 bundle
         run: sh _/build-miro-stage0
