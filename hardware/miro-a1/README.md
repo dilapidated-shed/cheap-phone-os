@@ -79,3 +79,14 @@ The exact target name `s9863a1h10_go_32b` appears in public UNISOC-derived sourc
 This establishes a much stronger reference baseline than the generic mainline 1H10 board. It still does not establish that any one public overlay is the MIRO overlay. Compare it against the MIRO's raw `dtb_a` and `dtbo_a`.
 
 See `../sc9863a/README.md` for the documentation and BSP source map.
+
+
+## Touchscreen
+
+The exact `s9863a1h10_go_32b` public reference currently points to I2C3 / FocalTech FT5436 / address 0x38 with AP GPIO 145 reset and AP GPIO 144 interrupt. These remain reference values until confirmed on the physical MIRO.
+
+See [touchscreen.md](touchscreen.md) and run:
+
+```sh
+sh _/inspect-miro-touchscreen
+```
