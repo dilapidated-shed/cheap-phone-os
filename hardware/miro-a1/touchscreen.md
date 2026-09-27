@@ -65,3 +65,35 @@ directly in Termux on the stock MIRO. The script reads the running phone's live 
 - Motorola public UNISOC kernel, `arch/arm/boot/dts/sharkl3.dtsi`
 - Motorola public UNISOC kernel, `arch/arm/boot/dts/sc9863a.dtsi`
 - adaptive touchscreen DT binding, `Documentation/devicetree/bindings/input/touchscreen/adaptive-touchscreen.txt`
+
+
+## Physical MIRO Termux receipt — 2026-09-27
+
+Running `_/inspect-miro-touchscreen` directly in Termux on the stock MIRO A1 produced:
+
+```text
+Platform:
+  sp9863a
+  s9863a1h10_go_32b
+  s9863a1h10_go_32b
+
+I2C devices:
+  none visible to the Termux app UID
+
+Touchscreen DT node:
+  none visible to the Termux app UID
+
+Accessible vendor files:
+  /vendor_dlkm/lib/modules/focaltech_ats.ko
+  /vendor_dlkm/lib/modules/il79451a_touch_spi.ko
+  /vendor/etc/sinput/adaptive_ts.conf
+```
+
+The app UID was also denied access to `/proc/modules`, `/proc/bus/input/devices`, InputManager's `dumpsys`, and the input-event sysfs inventory.
+
+Interpretation:
+
+- absence of the live DT/I2C/input entries in this receipt is an Android sandbox visibility limit, not evidence that those kernel objects are absent;
+- `focaltech_ats.ko` is strong corroboration for the exact-target SC9863A reference, which uses FocalTech FT5436 over I2C3;
+- `il79451a_touch_spi.ko` proves the stock vendor image also carries an Ilitek SPI touchscreen option, so module presence alone cannot identify the installed MIRO panel;
+- the selected controller still needs to be established from accessible vendor configuration/module-load metadata or a higher-privilege shell/device-tree receipt.
