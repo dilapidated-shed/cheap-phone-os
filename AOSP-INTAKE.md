@@ -4,7 +4,7 @@ Prepared 2026-09-26.
 
 This is an acquisition checklist and subsystem map, not a claim that the source has already been imported, a minimal build manifest, or a flashable MIRO image.
 
-**Acquire broadly; select the installed system separately.** Preserve the complete manifest-selected AOSP source corpus and its provenance. Keeping an implementation for reference does not commit our operating system to its interface, policy, language, database, or resident services.
+**Keep the active MIRO tree narrow; keep the reference archive broad.** The active source/build tree is the complete dependency closure for the actual MIRO A1 target, not every project and architecture in AOSP. Broad manifest/source-family preservation is a separate archival track. Keeping an implementation for reference does not commit our operating system to its interface, policy, language, database, or resident services.
 
 ## 1. What makes the list complete
 
@@ -15,19 +15,19 @@ The repository already has `upstream-manifest` and `cheap-phone-manifest` branch
 ### Source acquisition checklist
 
 - [ ] Preserve the canonical `platform/manifest` history and the exact manifest revision used for each acquisition.
-- [ ] Acquire every project selected by the intended archival scope, including nested projects and projects not installed on a handset. Record group exclusions explicitly; a normal host-specific/default-group checkout is not automatically an archive of every manifest entry.
+- [ ] For the active MIRO tree, acquire every project required by the selected MIRO A1 product and its transitive build/runtime dependency closure. Record exclusions explicitly, especially unrelated architectures, hardware targets and products. For the archival track, preserve broader manifest/source-family history separately under the mirror policy.
 - [ ] Preserve project name, checkout path, canonical remote, revision, groups, and provenance. Preserve manifest copy/link rules; do not flatten nested repositories into misleading directory copies.
 - [ ] Preserve branch/tag history in the namespaced mirror arrangement described in `MIRROR.md`. A partial clone, shallow project, or current-branch checkout is not a complete historical mirror.
 - [ ] Record immutable component commit IDs after synchronization. A manifest whose projects name moving branches is not itself a component revision lock. Capture a resolved manifest, for example with `repo manifest -r`, for the exact synchronized scope.
-- [ ] Preserve all manifest-selected `external/` projects and `prebuilts/` inputs, not just libraries whose names appear below. Account for transitive build dependencies before making a smaller product checkout.
+- [ ] Preserve every `external/` and `prebuilts/` input actually required by the selected MIRO closure, including transitive build dependencies. Do not include unrelated target payload merely because it exists in the manifest; archive broader source separately when it is useful for provenance or comparison.
 - [ ] Preserve license files, notices, component metadata, source attribution, and modifications. Track redistribution constraints separately for non-AOSP vendor inputs.
 - [ ] Preserve source and binary input identity separately: a checked-in prebuilt is not proof that its complete corresponding source is present.
 - [ ] Preserve build definitions, API/ABI definitions, resource data, tests, tooling, and relevant documentation alongside implementations.
 - [ ] Inventory separately selected Android kernel sources and their build manifests. Platform kernel prebuilts and kernel configuration repositories are not the target phone's complete kernel source.
 
-The exhaustive top-level acquisition scope is **all entries in that manifest**, including the families `build/`, `art/`, `bionic/`, `bootable/`, `cts/`, `dalvik/`, `developers/`, `development/`, `device/`, `external/`, `frameworks/`, `hardware/`, `kernel/`, `libcore/`, `libnativehelper/`, `packages/`, `pdk/`, `platform_testing/`, `prebuilts/`, `sdk/`, `system/`, `test/`, `tools/`, and any additional families selected by the actual manifest. These are inventory families, not shell globs to use instead of Repo.
+The canonical manifest remains the authoritative map of AOSP, but it is **not** the active-phone inclusion rule. The MIRO A1 tree includes only the projects needed by its selected framework/product dependency closure: its 32-bit ARM target, actual hardware paths, required host/build tools, runtime/framework dependencies, and the device/vendor/kernel interfaces needed for the physical phone. Unrelated architectures, products and hardware implementations are excluded from the active tree unless a demonstrated dependency requires them.
 
-A project's inclusion in the archive must not imply inclusion in the phone image. Conversely, absence from the explanatory tables below does not authorize omitting a manifest project from the archive.
+The archival mirror may remain much broader than the active phone tree. A project's inclusion in the archive does not imply inclusion in the phone image or active build. See issue #25 for the target-closure acceptance criteria and the mirror policy for broad preservation.
 
 ## 2. Keep the upstream track separate from the device track
 
@@ -241,7 +241,7 @@ The existing `_/sync-upstream` script is a source checkout entry point. Its exis
 - [ ] **Replacement policy demonstrated:** process isolation, file/network/device authority, child-policy protection, provenance handling, update trust and recovery tested, including denial cases.
 - [ ] **Daily-use reliability demonstrated:** low-memory/process-loss recovery, incoming calls/messages while idle, alarms, files/forms/photos and interrupted updates/transfers tested.
 
-**Status of this change:** checklist/documentation only. It does not download the full AOSP source, resolve a full build dependency graph, extract vendor binaries, implement replacements, flash a phone, or establish Android 17 compatibility with the MIRO A1. The source acquisition scope is complete by manifest definition; the smallest sufficient bootable MIRO product remains to be established by the build and physical-device gates above.
+**Status of this change:** checklist/documentation only. It does not acquire the complete MIRO A1 dependency closure, resolve its full build graph, extract all vendor inputs, implement replacements, flash a phone, or establish Android 17 compatibility with the MIRO A1. The active source scope is complete only when issue #25's dependency-closure receipts are satisfied; broad archival preservation remains a separate concern.
 
 ## Primary references
 
