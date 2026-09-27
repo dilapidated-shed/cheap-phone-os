@@ -94,12 +94,12 @@ A reproducible non-flashable bring-up bundle is defined in [../../kernel/BRINGUP
 
 ```text
 ARM32 zImage
-sp9863a.dtb
-sp9863a-1h10_go_32b-overlay.dtbo
+donor-base-sp9863a.dtb
+reference-board-sp9863a-1h10_go_32b-overlay.dtbo
 tiny static initramfs
 SHA-256 receipt
 ```
 
 The stage-0 donor is pinned to a public Linux 4.14.199 SharkL3 tree because it contains the exact ARM32 board-family build path. Official Linux 5.15.149 remains the cleaner mechanism/forward-port lane.
 
-A successful CI compile is a **build receipt only**. It is not permission to flash. Boot-image packing waits for observed MIRO boot-header parameters and a tested recovery path.
+The bundled DTB/DTBO are explicitly named donor/reference artifacts; the exact-family overlay is not promoted to a physical MIRO board description. A successful CI compile is a **build receipt only**. It is not permission to flash. Boot-image packing waits for recovered MIRO DT evidence, observed boot-header parameters, and a tested recovery path.
