@@ -17,7 +17,7 @@ unsigned-long notifier action and u64 DSI read-time fields.
  
 --- a/drivers/gpu/drm/sprd/sysfs/sysfs_dsi.c
 +++ b/drivers/gpu/drm/sprd/sysfs/sysfs_dsi.c
-@@ -528,7 +528,7 @@ static ssize_t max_read_time_show(struct device *dev,
+@@ -528,6 +528,6 @@ static ssize_t max_read_time_show(struct device *dev,
  {
  	struct sprd_dsi *dsi = dev_get_drvdata(dev);
  
