@@ -31,7 +31,7 @@ if [ ! -d "$source_dir/.git" ]; then
     exit 1
 fi
 
-for program in make cpio gzip sha256sum "${kernel_cross}gcc"
+for program in git make cpio gzip sha256sum "${kernel_cross}gcc"
 do
     if ! command -v "$program" >/dev/null 2>&1; then
         printf 'missing build tool: %s\n' "$program" >&2
@@ -56,6 +56,22 @@ printf 'artifacts:       %s\n' "$artifacts"
 printf 'kernel compiler: %sgcc\n' "$kernel_cross"
 
 mkdir -p "$out" "$artifacts"
+
+patch_dir="$root/kernel/patches/miro-stage0"
+for patch in "$patch_dir"/*.patch
+do
+    [ -e "$patch" ] || continue
+
+    if git -C "$source_dir" apply --check "$patch" >/dev/null 2>&1; then
+        printf 'applying donor patch: %s\n' "${patch#"$root/"}"
+        git -C "$source_dir" apply "$patch"
+    elif git -C "$source_dir" apply --reverse --check "$patch" >/dev/null 2>&1; then
+        printf 'donor patch already applied: %s\n' "${patch#"$root/"}"
+    else
+        printf 'donor patch does not apply cleanly: %s\n' "$patch" >&2
+        exit 1
+    fi
+done
 
 # This donor combines a newer DTC makefile (HOSTLDLIBS_dtc) with an older
 # Kbuild host linker (HOSTLOADLIBES_dtc). Supply the legacy variable explicitly
