@@ -81,16 +81,21 @@ if [ -r /usr/include/yaml.h ]; then
     dtc_host_loadlibs=-lyaml
 fi
 
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" sprd_sharkl3_defconfig
+# The vendor donor carries multiple diagnostic-only printf type mismatches in
+# unrelated subsystems. Keep its global -Werror policy, but do not make the
+# format-warning class fatal for this bring-up build.
+kernel_kcflags="${KCFLAGS:-} -Wno-error=format"
+
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" KCFLAGS="$kernel_kcflags" sprd_sharkl3_defconfig
 
 (
     cd "$source_dir"
     ARCH=arm CROSS_COMPILE="$kernel_cross" scripts/kconfig/merge_config.sh -m -O "$out" "$out/.config" "$root/kernel/miro-a1-stage0.config"
 )
 
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" olddefconfig
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" -j"$jobs" zImage
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3 -j"$jobs" dtbs
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" KCFLAGS="$kernel_kcflags" olddefconfig
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" KCFLAGS="$kernel_kcflags" -j"$jobs" zImage
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" KCFLAGS="$kernel_kcflags" BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3 -j"$jobs" dtbs
 
 for built in "$out/arch/arm/boot/dts/sp9863a.dtb" "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo"
 do
