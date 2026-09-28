@@ -57,16 +57,24 @@ printf 'kernel compiler: %sgcc\n' "$kernel_cross"
 
 mkdir -p "$out" "$artifacts"
 
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" sprd_sharkl3_defconfig
+# This donor combines a newer DTC makefile (HOSTLDLIBS_dtc) with an older
+# Kbuild host linker (HOSTLOADLIBES_dtc). Supply the legacy variable explicitly
+# when libyaml headers are present so yamltree.o is linked with libyaml.
+dtc_host_loadlibs=
+if [ -r /usr/include/yaml.h ]; then
+    dtc_host_loadlibs=-lyaml
+fi
+
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" sprd_sharkl3_defconfig
 
 (
     cd "$source_dir"
     ARCH=arm CROSS_COMPILE="$kernel_cross" scripts/kconfig/merge_config.sh -m -O "$out" "$out/.config" "$root/kernel/miro-a1-stage0.config"
 )
 
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" olddefconfig
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" -j"$jobs" zImage
-make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3 -j"$jobs" dtbs
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" olddefconfig
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" -j"$jobs" zImage
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3 -j"$jobs" dtbs
 
 for built in "$out/arch/arm/boot/dts/sp9863a.dtb" "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo"
 do
