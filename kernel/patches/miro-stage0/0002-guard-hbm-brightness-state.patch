@@ -1,0 +1,24 @@
+From: Cheap Phone OS stage-0 bring-up
+Subject: [PATCH] drm: sprd: guard HBM brightness state with CONFIG_HBM_SUPPORT
+
+g_hbm_enable is declared only when CONFIG_HBM_SUPPORT is enabled, but
+sprd_oled_set_brightness() references it unconditionally. Keep the HBM-only
+behavior behind the same configuration guard.
+
+--- a/drivers/gpu/drm/sprd/sprd_panel.c
++++ b/drivers/gpu/drm/sprd/sprd_panel.c
+@@ -770,12 +770,14 @@ static int sprd_oled_set_brightness(struct backlight_device *bdev)
+ 	int brightness, level;
+ 	struct sprd_oled *oled = bl_get_data(bdev);
+ 	struct sprd_panel *panel = oled->panel;
++#ifdef CONFIG_HBM_SUPPORT
+     if (g_hbm_enable){
+ 		DRM_INFO("firefly ,Now hbm enable, want to set level = %d\n", bdev->props.brightness);
+ 		DRM_INFO("firefly ,Do not allow to set other level backlight\n");
+ 		if (g_last_level > 0)
+             bdev->props.brightness = 256;
+ 	}
++#endif
+ 
+ 	mutex_lock(&panel_lock);
+ 	if (!panel->is_enabled) {
