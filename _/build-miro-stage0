@@ -1,0 +1,156 @@
+#!/bin/sh
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+source_dir=${MIRO_STAGE0_KERNEL_DIR:-"$root/_/miro-stage0-kernel"}
+toolchain_dir=${MIRO_STAGE0_TOOLCHAIN_DIR:-"$root/_/toolchains/arm-linux-androideabi-4.9"}
+out=${MIRO_STAGE0_OUT:-"$root/_/out/miro-stage0-kernel"}
+artifacts=${MIRO_STAGE0_ARTIFACTS:-"$root/_/artifacts/miro-stage0"}
+
+if [ -n "${KERNEL_CROSS_COMPILE:-}" ]; then
+    kernel_cross=$KERNEL_CROSS_COMPILE
+elif [ -x "$toolchain_dir/bin/arm-linux-androideabi-gcc" ]; then
+    kernel_cross="$toolchain_dir/bin/arm-linux-androideabi-"
+else
+    kernel_cross=${CROSS_COMPILE:-arm-linux-gnueabi-}
+fi
+
+jobs=${JOBS:-}
+
+if [ -z "$jobs" ]; then
+    if command -v nproc >/dev/null 2>&1; then
+        jobs=$(nproc)
+    else
+        jobs=2
+    fi
+fi
+
+if [ ! -d "$source_dir/.git" ]; then
+    printf 'kernel source missing: %s\n' "$source_dir" >&2
+    printf 'run: sh _/sync-miro-stage0-kernel\n' >&2
+    exit 1
+fi
+
+for program in git make cpio gzip sha256sum "${kernel_cross}gcc"
+do
+    if ! command -v "$program" >/dev/null 2>&1; then
+        printf 'missing build tool: %s\n' "$program" >&2
+        exit 1
+    fi
+done
+
+if [ -t 1 ]; then
+    bold=$(printf '\033[1m')
+    green=$(printf '\033[32m')
+    reset=$(printf '\033[0m')
+else
+    bold=
+    green=
+    reset=
+fi
+
+printf '%s%sMIRO stage-0 build%s\n' "$bold" "$green" "$reset"
+printf 'kernel:          %s\n' "$source_dir"
+printf 'out:             %s\n' "$out"
+printf 'artifacts:       %s\n' "$artifacts"
+printf 'kernel compiler: %sgcc\n' "$kernel_cross"
+
+mkdir -p "$out" "$artifacts"
+
+patch_dir="$root/kernel/patches/miro-stage0"
+for patch in "$patch_dir"/*.patch
+do
+    [ -e "$patch" ] || continue
+
+    if git -C "$source_dir" apply --check "$patch" >/dev/null 2>&1; then
+        printf 'applying donor patch: %s\n' "${patch#"$root/"}"
+        git -C "$source_dir" apply "$patch"
+    elif git -C "$source_dir" apply --reverse --check "$patch" >/dev/null 2>&1; then
+        printf 'donor patch already applied: %s\n' "${patch#"$root/"}"
+    else
+        printf 'donor patch does not apply cleanly: %s\n' "$patch" >&2
+        exit 1
+    fi
+done
+
+# This donor combines a newer DTC makefile (HOSTLDLIBS_dtc) with an older
+# Kbuild host linker (HOSTLOADLIBES_dtc). Supply the legacy variable explicitly
+# when libyaml headers are present so yamltree.o is linked with libyaml.
+dtc_host_loadlibs=
+if [ -r /usr/include/yaml.h ]; then
+    dtc_host_loadlibs=-lyaml
+fi
+
+# The vendor donor carries diagnostic-only warnings in unrelated subsystems:
+# printf type mismatches and a header-level notifier variable that is unused in
+# one translation unit. Keep its global -Werror policy, but do not make those
+# two warning classes fatal for this bring-up build.
+kernel_kcflags="${KCFLAGS:-} -Wno-error=format -Wno-error=unused-variable"
+
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" KCFLAGS="$kernel_kcflags" sprd_sharkl3_defconfig
+
+(
+    cd "$source_dir"
+    ARCH=arm CROSS_COMPILE="$kernel_cross" scripts/kconfig/merge_config.sh -m -O "$out" "$out/.config" "$root/kernel/miro-a1-stage0.config"
+)
+
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" KCFLAGS="$kernel_kcflags" olddefconfig
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" KCFLAGS="$kernel_kcflags" -j"$jobs" zImage
+make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" KCFLAGS="$kernel_kcflags" BSP_BUILD_DT_OVERLAY=y BSP_BUILD_ANDROID_OS=y BSP_BUILD_FAMILY=sharkl3 -j"$jobs" dtbs
+
+for built in "$out/arch/arm/boot/dts/sp9863a.dtb" "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo"
+do
+    if [ ! -s "$built" ]; then
+        printf 'expected device-tree artifact missing: %s\n' "$built" >&2
+        exit 1
+    fi
+done
+
+rootfs="$out/stage0-rootfs"
+rm -rf "$rootfs"
+mkdir -p "$rootfs/dev" "$rootfs/proc" "$rootfs/sys" "$rootfs/tmp"
+
+"${kernel_cross}gcc" -march=armv7-a -mfloat-abi=soft -Os -ffreestanding -fno-builtin -fno-stack-protector -fomit-frame-pointer -Wall -Wextra -Werror -nostdlib -static -Wl,-e,_start -Wl,--build-id=none -o "$rootfs/init" "$root/initramfs/miro-a1/init.c"
+chmod 0755 "$rootfs/init"
+
+(
+    cd "$rootfs"
+    find . -print0 | sort -z | cpio --null --create --format=newc --owner=0:0 2>/dev/null | gzip -9n
+) > "$artifacts/initramfs.cpio.gz"
+
+cp "$out/arch/arm/boot/zImage" "$artifacts/zImage"
+cp "$out/arch/arm/boot/dts/sp9863a.dtb" "$artifacts/donor-base-sp9863a.dtb"
+cp "$out/arch/arm/boot/dts/sp9863a-1h10_go_32b-overlay.dtbo" "$artifacts/reference-board-sp9863a-1h10_go_32b-overlay.dtbo"
+cp "$out/.config" "$artifacts/kernel.config"
+
+cat > "$artifacts/ARTIFACTS.txt" <<'EOF'
+Cheap Phone OS — MIRO A1 stage 0
+
+zImage
+  ARM32 SharkL3 kernel from the pinned public vendor-derived donor.
+
+initramfs.cpio.gz
+  Tiny Cheap Phone OS stage-0 userspace.
+
+donor-base-sp9863a.dtb
+  Donor SoC/base device tree. Not yet the recovered physical MIRO device tree.
+
+reference-board-sp9863a-1h10_go_32b-overlay.dtbo
+  Exact public board-family reference overlay. Comparison evidence ONLY.
+  Do not flash or treat this as the physical MIRO overlay without reconciliation.
+
+kernel.config
+  Exact resolved kernel configuration used for this build.
+
+This directory is not a flashable boot image. Physical boot packaging waits for
+stock MIRO boot-image parameters, recovered DTB/DTBO evidence, and a tested
+recovery path.
+EOF
+
+(
+    cd "$artifacts"
+    sha256sum zImage donor-base-sp9863a.dtb reference-board-sp9863a-1h10_go_32b-overlay.dtbo initramfs.cpio.gz kernel.config ARTIFACTS.txt > SHA256SUMS
+)
+
+printf '\n%s%sartifacts ready%s\n' "$bold" "$green" "$reset"
+cat "$artifacts/SHA256SUMS"

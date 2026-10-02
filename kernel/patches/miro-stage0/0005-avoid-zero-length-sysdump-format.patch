@@ -1,0 +1,19 @@
+From: Cheap Phone OS stage-0 bring-up
+Subject: [PATCH] debug: avoid zero-length format in sysdump tail marker
+
+The pinned SharkL3 donor builds with -Werror=format-zero-length under the
+donor-era AOSP GCC 4.9 toolchain. The tail marker only needs an empty C
+string, so terminate it directly instead of calling sprintf with an empty
+format.
+
+--- a/drivers/soc/sprd/debug/sysdump/sysdump.c
++++ b/drivers/soc/sprd/debug/sysdump/sysdump.c
+@@ -1221,7 +1221,7 @@ int minidump_save_extend_information(const char *name,
+ 			name, paddr_start, paddr_end);
+ 
+ 	tail_section = &minidump_info_g.section_info_total.section_info[section_tail];
+-	sprintf(tail_section->section_name, "");
++	tail_section->section_name[0] = '\0';
+ 	return 0;
+ }
+ EXPORT_SYMBOL(minidump_save_extend_information);

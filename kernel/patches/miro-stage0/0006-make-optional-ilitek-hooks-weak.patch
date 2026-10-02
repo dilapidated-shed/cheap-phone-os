@@ -1,0 +1,47 @@
+From: Cheap Phone OS stage-0 bring-up
+Subject: [PATCH] sprd: make optional Ilitek hooks weak
+
+The SharkL3 ARM32 defconfig selects the adaptive FocalTech touchscreen path,
+but generic panel and MUSB code unconditionally reference two hooks supplied
+only by the optional Ilitek driver. That leaves a FocalTech build with
+undefined symbols at final vmlinux link.
+
+The panel file already uses a weak no-op for the analogous Chipone reset hook.
+Give the Ilitek reset the same fallback, and give the MUSB charger-mode hook a
+weak success fallback. A real Ilitek driver supplies strong definitions that
+override these weak ones.
+
+--- a/drivers/gpu/drm/sprd/sprd_panel.c
++++ b/drivers/gpu/drm/sprd/sprd_panel.c
+@@ -27,6 +27,7 @@
+ #define SPRD_MIPI_DSI_FMT_DSC 0xff
+ static DEFINE_MUTEX(panel_lock);
+ 
++void __attribute__((weak)) ilitek_tp_rst(void) { }
+ void __attribute__((weak)) cts_tp_rst(void) { }
+ 
+ typedef enum tagLcd
+@@ -128,7 +129,6 @@ static int sprd_panel_send_cmds(struct mipi_dsi_device *dsi,
+ }
+ 
+ extern int lcd_shutdown_flag;
+-extern void ilitek_tp_rst(void);
+ extern void cts_tp_rst(void);
+ static int sprd_panel_unprepare(struct drm_panel *p)
+ {
+--- a/drivers/usb/musb/musb_sprd.c
++++ b/drivers/usb/musb/musb_sprd.c
+@@ -101,7 +101,12 @@ static int __init lcd_name_get(char *str)
+ __setup("lcd_name=", lcd_name_get);
+ #define DISABLE 0
+ #define ENABLE 1
+-extern int ili_ic_func_ctrl(const char *name, int ctrl);
++int __attribute__((weak)) ili_ic_func_ctrl(const char *name, int ctrl)
++{
++	(void)name;
++	(void)ctrl;
++	return 0;
++}
+ 
+ static void sprd_musb_enable(struct musb *musb)
+ {

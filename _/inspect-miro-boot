@@ -1,0 +1,120 @@
+#!/bin/sh
+set -u
+
+section()
+{
+    printf '\n== %s ==\n' "$1"
+}
+
+cat_if_readable()
+{
+    file=$1
+
+    if [ -r "$file" ]; then
+        echo "--- $file"
+        cat "$file"
+        case "$(tail -c 1 "$file" 2>/dev/null || true)" in
+            "") ;;
+            *) echo ;;
+        esac
+    else
+        echo "--- $file (not readable)"
+    fi
+}
+
+dt_text()
+{
+    file=$1
+    label=$2
+
+    if [ -r "$file" ]; then
+        printf '%s: ' "$label"
+        tr '\000' ' ' < "$file"
+        echo
+    fi
+}
+
+section "Platform"
+printf 'board.platform: '
+getprop ro.board.platform 2>/dev/null || true
+printf 'hardware: '
+getprop ro.hardware 2>/dev/null || true
+printf 'boot.hardware: '
+getprop ro.boot.hardware 2>/dev/null || true
+printf 'ABI list: '
+getprop ro.product.cpu.abilist 2>/dev/null || true
+uname -a 2>/dev/null || true
+
+section "Boot properties"
+getprop 2>/dev/null |
+    grep -E '^\[(ro|vendor)\.boot\.|^\[ro\.build\.ab_update\]|^\[ro\.virtual_ab\.' |
+    sort || true
+
+section "Kernel boot text"
+cat_if_readable /proc/cmdline
+cat_if_readable /proc/bootconfig
+
+section "Live device-tree chosen node"
+for root in /sys/firmware/devicetree/base /proc/device-tree
+do
+    [ -d "$root/chosen" ] || continue
+    echo "root: $root"
+    dt_text "$root/chosen/bootargs" bootargs
+    dt_text "$root/chosen/bootargs_ext" bootargs_ext
+    dt_text "$root/chosen/stdout-path" stdout-path
+done
+
+section "Named block partitions"
+shown=false
+for directory in /dev/block/by-name /dev/block/platform/*/by-name
+do
+    [ -d "$directory" ] || continue
+    shown=true
+    echo "--- $directory"
+    ls -l "$directory" 2>/dev/null || true
+done
+[ "$shown" = true ] || echo "(no by-name directory visible)"
+
+section "Boot partition readability"
+for name in boot_a boot_b vendor_boot_a vendor_boot_b init_boot_a init_boot_b dtb_a dtb_b dtbo_a dtbo_b vbmeta_a vbmeta_b
+do
+    path="/dev/block/by-name/$name"
+    [ -e "$path" ] || continue
+
+    target=$(readlink -f "$path" 2>/dev/null || true)
+    printf '%-14s -> %s' "$name" "$target"
+
+    if [ -r "$path" ]; then
+        echo "  readable"
+        printf '  first 64 bytes:'
+        dd if="$path" bs=64 count=1 2>/dev/null | od -An -tx1 -v || true
+    else
+        echo "  not readable"
+    fi
+done
+
+section "fstab candidates"
+found=false
+for file in /vendor/etc/fstab* /odm/etc/fstab* /system/etc/fstab* /first_stage_ramdisk/fstab*
+do
+    [ -e "$file" ] || continue
+    found=true
+    cat_if_readable "$file"
+done
+[ "$found" = true ] || echo "(no candidate visible)"
+
+section "Boot-image tools and metadata exposed by Android"
+for command in bootctl getprop
+do
+    if command -v "$command" >/dev/null 2>&1; then
+        printf '%s: %s\n' "$command" "$(command -v "$command")"
+    fi
+done
+
+if command -v bootctl >/dev/null 2>&1; then
+    bootctl hal-info 2>&1 || true
+    bootctl get-current-slot 2>&1 || true
+fi
+
+echo
+echo "Read-only probe complete. No partition was written."

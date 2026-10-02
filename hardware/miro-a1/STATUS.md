@@ -20,7 +20,7 @@ The stock phone exposes eMMC, A/B SPL, U-Boot, TrustOS/SML, boot/init_boot/vendo
 
 | Area | Status | Evidence / next gap |
 | --- | --- | --- |
-| CPU architecture | source coverage very good | SC9863A Cortex-A55/ARMv8 descriptions and Linux support located; MIRO Android userspace is a 32-bit target |
+| CPU architecture | source coverage very good | SC9863A Cortex-A55/ARMv8 descriptions located; exact public MIRO-family BSP selects an ARM32 kernel target. Upstream 5.15 SC9863A board support is ARM64, so first compilation uses the public ARM32 SharkL3 vendor donor while 5.15 remains the forward-port reference |
 | interrupt architecture | source coverage good | ARM GIC + SC9863A/SharkL3 DTS support located |
 | UART | source coverage very good | Spreadtrum UART driver and SC9863A/SharkL3 nodes located |
 | I2C controller | source coverage good | Spreadtrum/SharkL3 I2C implementation and bus nodes located |
@@ -86,3 +86,20 @@ The highest-value remaining stock-phone evidence is the **actual merged device t
 7. portions of audio, Wi-Fi/Bluetooth and camera wiring.
 
 Keep raw images/hashes before decompilation and keep stock-phone evidence distinct from public 1H10 reference material.
+
+
+## Stage-0 build status
+
+A reproducible non-flashable bring-up bundle is defined in [../../kernel/BRINGUP.md](../../kernel/BRINGUP.md). It builds:
+
+```text
+ARM32 zImage
+donor-base-sp9863a.dtb
+reference-board-sp9863a-1h10_go_32b-overlay.dtbo
+tiny static initramfs
+SHA-256 receipt
+```
+
+The stage-0 donor is pinned to a public Linux 4.14.199 SharkL3 tree because it contains the exact ARM32 board-family build path. Official Linux 5.15.149 remains the cleaner mechanism/forward-port lane.
+
+The bundled DTB/DTBO are explicitly named donor/reference artifacts; the exact-family overlay is not promoted to a physical MIRO board description. A successful CI compile is a **build receipt only**. It is not permission to flash. Boot-image packing waits for recovered MIRO DT evidence, observed boot-header parameters, and a tested recovery path.

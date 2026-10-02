@@ -1,0 +1,32 @@
+From: Cheap Phone OS stage-0 bring-up
+Subject: [PATCH] power: fix vendor charger build diagnostics
+
+The pinned SharkL3 donor builds with -Werror.
+
+charger-manager.c passes adapter_default_charge_vol to a format string that
+omits the corresponding conversion; the value is recorded in volts, so print it
+as %dV. sprd_vote_register_sysfs() returns int error codes but omits its return
+type, so declare it explicitly.
+
+--- a/drivers/power/supply/charger-manager.c
++++ b/drivers/power/supply/charger-manager.c
+@@ -1744,7 +1744,7 @@ static void cm_update_charge_info(struct charger_manager *cm)
+ 
+ 	dev_info(cm->dev, "%s,chgr type =%d,fchg_en=%d,cp_running=%d,cp_recovery=%d"
+ 		 "chg_lmt_cur=%dmA,inpt_lmt_cur=%dmA,max chg_volt=%dmV,"
+-		 "chg_volt_drop=%d,adapter_chg_volt= dV,thm_cur=%d,dyna=%d;chg_info_cmd=0x%x\n",
++		 "chg_volt_drop=%d,adapter_chg_volt=%dV,thm_cur=%d,dyna=%d;chg_info_cmd=0x%x\n",
+ 		 __func__, desc->charger_type, desc->enable_fast_charge, desc->cp.cp_running,
+ 		 desc->cp.recovery, desc->charge_limit_cur/1000, desc->input_limit_cur/1000,
+ 		 desc->charge_voltage_max/1000, desc->charge_voltage_drop/1000,
+--- a/drivers/power/supply/sprd_vote.c
++++ b/drivers/power/supply/sprd_vote.c
+@@ -415,7 +415,7 @@ static ssize_t vote_info_show(struct device *dev,
+ 	return snprintf(buf, PAGE_SIZE, "%s\n", bufinfo);
+ }
+ 
+-static sprd_vote_register_sysfs(struct device *dev)
++static int sprd_vote_register_sysfs(struct device *dev)
+ {
+ 	struct sprd_vote_sysfs *sysfs;
+ 	int ret;

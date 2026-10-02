@@ -1,0 +1,27 @@
+From: Cheap Phone OS stage-0 bring-up
+Subject: [PATCH] sprd: fix notifier and DSI sysfs format types
+
+The donor builds with -Werror. Match the format specifiers to the actual
+unsigned-long notifier action and u64 DSI read-time fields.
+
+--- a/drivers/iio/sprd_hub/shub_core.c
++++ b/drivers/iio/sprd_hub/shub_core.c
+@@ -2613,7 +2613,7 @@ static int shub_reboot_notifier_fn(struct notifier_block *nb, unsigned long acti
+ 			dev_info(&sensor->sensor_pdev->dev, "sensor_status[%d]\n", i);
+ 		}
+ 	}
+-	dev_info(&sensor->sensor_pdev->dev, "reboot action=%d\n", action);
++	dev_info(&sensor->sensor_pdev->dev, "reboot action=%lu\n", action);
+ 	return NOTIFY_OK;
+ }
+ 
+--- a/drivers/gpu/drm/sprd/sysfs/sysfs_dsi.c
++++ b/drivers/gpu/drm/sprd/sysfs/sysfs_dsi.c
+@@ -528,6 +528,6 @@ static ssize_t max_read_time_show(struct device *dev,
+ {
+ 	struct sprd_dsi *dsi = dev_get_drvdata(dev);
+ 
+-	return snprintf(buf, PAGE_SIZE, "%u ns\n", dsi->ctx.max_rd_time);
++	return snprintf(buf, PAGE_SIZE, "%llu ns\n", dsi->ctx.max_rd_time);
+ }
+ static DEVICE_ATTR_RW(max_read_time);

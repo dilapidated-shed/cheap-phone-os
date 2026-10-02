@@ -1,0 +1,48 @@
+name: MIRO stage 0
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/miro-stage0.yml"
+      - "_/build-miro-stage0"
+      - "_/sync-miro-stage0-kernel"
+      - "_/sync-miro-stage0-toolchain"
+      - "initramfs/miro-a1/**"
+      - "kernel/BRINGUP.md"
+      - "kernel/STAGE0-VALIDATION.md"
+      - "kernel/miro-a1-stage0.config"
+      - "kernel/patches/miro-stage0/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out Cheap Phone OS
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y bc bison cpio flex git libelf-dev libssl-dev libyaml-dev make pkg-config
+
+      - name: Fetch pinned SharkL3 donor
+        run: sh _/sync-miro-stage0-kernel
+
+      - name: Fetch pinned AOSP GCC 4.9
+        run: sh _/sync-miro-stage0-toolchain
+
+      - name: Build stage-0 bundle
+        run: sh _/build-miro-stage0
+
+      - name: Show receipt
+        run: |
+          file _/artifacts/miro-stage0/*
+          cat _/artifacts/miro-stage0/SHA256SUMS
+
+      - name: Upload stage-0 pieces
+        uses: actions/upload-artifact@v4
+        with:
+          name: miro-stage0
+          path: _/artifacts/miro-stage0/
+          if-no-files-found: error
