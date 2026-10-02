@@ -81,10 +81,11 @@ if [ -r /usr/include/yaml.h ]; then
     dtc_host_loadlibs=-lyaml
 fi
 
-# The vendor donor carries multiple diagnostic-only printf type mismatches in
-# unrelated subsystems. Keep its global -Werror policy, but do not make the
-# format-warning class fatal for this bring-up build.
-kernel_kcflags="${KCFLAGS:-} -Wno-error=format"
+# The vendor donor carries diagnostic-only warnings in unrelated subsystems:
+# printf type mismatches and a header-level notifier variable that is unused in
+# one translation unit. Keep its global -Werror policy, but do not make those
+# two warning classes fatal for this bring-up build.
+kernel_kcflags="${KCFLAGS:-} -Wno-error=format -Wno-error=unused-variable"
 
 make -C "$source_dir" O="$out" ARCH=arm CROSS_COMPILE="$kernel_cross" HOSTLOADLIBES_dtc="$dtc_host_loadlibs" KCFLAGS="$kernel_kcflags" sprd_sharkl3_defconfig
 
