@@ -9,6 +9,7 @@ on:
       - "_/sync-miro-stage0-toolchain"
       - "initramfs/miro-a1/**"
       - "kernel/BRINGUP.md"
+      - "kernel/STAGE0-VALIDATION.md"
       - "kernel/miro-a1-stage0.config"
       - "kernel/patches/miro-stage0/**"
   workflow_dispatch:
