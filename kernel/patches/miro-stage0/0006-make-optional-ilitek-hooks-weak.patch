@@ -31,7 +31,7 @@ override these weak ones.
  {
 --- a/drivers/usb/musb/musb_sprd.c
 +++ b/drivers/usb/musb/musb_sprd.c
-@@ -101,7 +101,13 @@ static int __init lcd_name_get(char *str)
+@@ -101,7 +101,12 @@ static int __init lcd_name_get(char *str)
  __setup("lcd_name=", lcd_name_get);
  #define DISABLE 0
  #define ENABLE 1
