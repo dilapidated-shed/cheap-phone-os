@@ -19,7 +19,7 @@ AOSP is a collection of Git repositories rather than one repository. This reposi
 
 See [AOSP-INTAKE.md](AOSP-INTAKE.md) for the complete acquisition scope, subsystem checklist, single-human product boundaries, device-specific inputs, and acceptance gates. Source preservation and the software installed on the phone are separate decisions; current upstream tracking is not a claim of MIRO hardware compatibility.
 
-See [SOURCES.md](SOURCES.md) for the high-value Android layers and [MIRROR.md](MIRROR.md) for the breadth-first mirror policy. [MIRRORS.tsv](MIRRORS.tsv) is the seed inventory of source families whose branch and tag histories should be preserved here. See [DESIGN-SOURCES.md](DESIGN-SOURCES.md) for the roles of Linux, BSDs, xv6, embedded systems, Plan 9, MINIX, Android and vendor sources. The current physical MIRO bring-up map is in [hardware/miro-a1/STATUS.md](hardware/miro-a1/STATUS.md).
+See [SOURCES.md](SOURCES.md) for the high-value Android layers and [MIRROR.md](MIRROR.md) for the breadth-first mirror policy. [MIRRORS.tsv](MIRRORS.tsv) is the seed inventory of source families whose branch and tag histories should be preserved here. See [DESIGN-SOURCES.md](DESIGN-SOURCES.md) for the roles of Linux, BSDs, xv6, embedded systems, Plan 9, MINIX, Android and vendor sources. The current physical MIRO bring-up map is in [hardware/miro-a1/STATUS.md](hardware/miro-a1/STATUS.md). The [MIRO C67 model/platform dossier](hardware/miro-c67/README.md) records the newer Helio G36 target separately; its physical board/ABI receipt is still pending.
 
 ## Get the complete upstream tree
 
