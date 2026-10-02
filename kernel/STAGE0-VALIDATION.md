@@ -31,6 +31,29 @@ SHA-256: e0e7835e58ccb4f729ec3f9d83dc5af2468ec80423f3b3ce1c234720fe685c97
 
 This proves that the freestanding init source is warning-clean and linkable as a static ARM EABI executable without libc. The SHA-256 above identifies this independent Clang validation build only; the canonical stage-0 bundle is built with the pinned AOSP GCC 4.9 toolchain and will have a different hash.
 
-## Kernel build
+## 2026-10-02 — first complete hosted stage-0 bundle
 
-No successful kernel compilation receipt is recorded here yet. PR #59's GitHub-hosted kernel build has been queued but has not executed. Do not reinterpret the init receipt as a kernel, DTB, DTBO, boot-image, or physical-boot receipt.
+GitHub Actions run 37017345054 completed successfully from PR #59 head
+`909877508de6a827f766744b55d684904fb39596` using the pinned SharkL3 donor and
+AOSP GCC 4.9 toolchain. The build produced an ARM zImage, donor/reference device
+trees, the freestanding initramfs, resolved kernel configuration, and artifact
+manifest.
+
+Receipt:
+
+```text
+53bdd4645040fe9fb3b73bf38340e796ccfb38b3db0e8c361392b022cbe18f60  zImage
+b02f6c97d943a5ba283cd6480be92f7701015fbbd2f7fb54114f911aa5668816  donor-base-sp9863a.dtb
+4d8931acbcfe8a688d805242eea90e98806281966e5ff30bfd699fb312efca23  reference-board-sp9863a-1h10_go_32b-overlay.dtbo
+fe925825f5ce8c9fd42884ca699d8028ced2b988e3158eadc787840830b058e3  initramfs.cpio.gz
+57d17f29fe11a5505e191c725b5c871a5c4d73db248894ca3c6d21ad7350f22a  kernel.config
+f4fe5eafc2d40b2a267f9da03c7c1d14fb50e898b82ed131b969156d348498ac  ARTIFACTS.txt
+```
+
+The uploaded `miro-stage0` artifact was artifact ID 11232595948; the uploaded
+archive digest was
+`d72e2ec6245e5f547774921a9a6c1c4ad86b96e7551af440e16df9057aa67de1`.
+
+This is a compilation and artifact receipt only. It does not establish that the
+donor/reference DTB/DTBO match the physical MIRO, does not create a boot image,
+and is not a physical-boot or flash-authorization receipt.
